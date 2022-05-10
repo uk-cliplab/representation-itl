@@ -2,9 +2,9 @@ import torch as torch
 from torch.autograd import grad
 import numpy as np
 
-import kernel_utils as ku
-import matrix_itl as itl
-import matrix_itl_approx as approx
+import repitl.kernel_utils as ku
+import repitl.matrix_itl as itl
+import repitl.matrix_itl_approx as approx
 
 def divergenceJR(X,Y,sigma,alpha, weighted = False):
     if weighted:

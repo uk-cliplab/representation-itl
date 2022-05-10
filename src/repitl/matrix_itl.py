@@ -6,7 +6,6 @@ and Matrix Renyi's alpha divergence
 
 import torch
 from functools import reduce
-import kernel_utils as ku
 
 def generalizedInformationPotential(K, alpha):
     """Computes the generalized information 

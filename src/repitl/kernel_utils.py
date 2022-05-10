@@ -5,6 +5,7 @@ Miscelaneous functions to compute kernels using tensorflow
 """
 import torch
 from typing import TypeVar
+
 ## Define Gaussian kernel a la Ermon
 Tensor = TypeVar(torch.tensor)
 
