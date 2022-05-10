@@ -138,9 +138,7 @@ def matrixAlphaEntropyLabel(L, alpha, weighted = False):
     H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return H
         
-    
-def joint_entropy_rff(cov_x,cov_y,alpha,sigma,n_rff):
-    
+def joint_entropy_rff(cov_x,cov_y,alpha,sigma,n_rff):    
     ex, _ = torch.symeig(cov_x, eigenvectors=True)  
     mx = torch.gt(ex, 0.0)
     mex = ex[mx]
@@ -173,11 +171,6 @@ def joint_entropy_rff_norm(cov_x,cov_y,alpha,sigma):
     Hj = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return Hj
 
-
-  
-
-
-
 def generalizedInformationPotential(K, alpha):
     """Computes the generalized information 
     potential of order alpha
@@ -200,7 +193,6 @@ def generalizedInformationPotential(K, alpha):
     GIP = torch.sum(torch.exp(alpha * torch.log(mek))) 
     return GIP
 
-
 def matrixAlphaEntropy(K, alpha):
     """Computes the matrix based alpha-entropy
     based on the spectrum of K
@@ -219,13 +211,7 @@ def matrixAlphaEntropy(K, alpha):
     GIP = generalizedInformationPotential(K, alpha)
     H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return H
-
-
-
-
-    
-    
-    
+ 
 def matrixAlphaJointEntropy(K_list, alpha):
     """Computes the matrix based alpha joint-entropy
     based on the spectrum of K
