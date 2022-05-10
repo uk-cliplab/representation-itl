@@ -18,7 +18,7 @@ def Z_rff(X,sigma,n_rff,random = True):
         # Set seed to generate the same set of random weights
         torch.manual_seed(5)
     n_rff = torch.tensor(n_rff)
-    gamma = (1/(2*sigma**2))
+    gamma = torch.tensor(1/(2*sigma**2))
     # Number of features in X
     d = X.shape[1]
     # Random Fourier features
@@ -98,6 +98,23 @@ def KzoKl_entropy_rff(cov_x,cov_y,alpha,sigma,n_rff):
     Hj = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return Hj
 
+def KzoKl_entropy_rff_weighted(cov_x,cov_y,alpha,sigma):
+    ex, _ = torch.symeig(cov_x, eigenvectors=True)  
+    mx = torch.gt(ex, 0.0)
+    mex = ex[mx]
+    mex /= 2*torch.sum(mex)
+    
+    ey, _ = torch.symeig(cov_y, eigenvectors=True)  
+    my = torch.gt(ey, 0.0)
+    mey = ey[my]
+    mey /= 2*torch.sum(mey)
+    
+    mexy = torch.cat((mex,mey))
+    
+    GIP = torch.sum(torch.exp(alpha * torch.log(mexy))) 
+    Hj = (1.0 / (1.0 - alpha)) * torch.log(GIP)
+    return Hj
+
 def matrixAlphaEntropyLabel(L, alpha, weighted = False):
     '''
     This function compute the entropy of the indicator variable
@@ -156,3 +173,73 @@ def joint_entropy_rff_norm(cov_x,cov_y,alpha,sigma):
     Hj = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return Hj
 
+
+  
+
+
+
+def generalizedInformationPotential(K, alpha):
+    """Computes the generalized information 
+    potential of order alpha
+          GIP_alpha(K) = trace(K_^alpha), 
+    where K^alpha is a matrix raised to the alpha power. 
+    K_ is normalized as K_ = K / trace(K), such that 
+          trace(K_) = 1.
+   
+    Args:
+      K: (N x N) Gram matrix.
+      alpha: order of the entropy.
+    
+    Returns:
+      GIP: generalized information potential of alpha order. 
+    """
+    ek, _ = torch.symeig(K, eigenvectors=True)  
+    mk = torch.gt(ek, 0.0)
+    mek = ek[mk]
+    mek = mek / torch.sum(mek)
+    GIP = torch.sum(torch.exp(alpha * torch.log(mek))) 
+    return GIP
+
+
+def matrixAlphaEntropy(K, alpha):
+    """Computes the matrix based alpha-entropy
+    based on the spectrum of K
+        H_alpha(A) = (1/(1-alpha))log(trace(A^alpha)), 
+    where A^alpha is the matrix power of alpha (A is normalized).
+    
+    
+    Args:
+      A: (N x N) Gram matrix.
+      alpha: order of the entropy.
+    
+    Returns:
+      H: alpha entropy 
+    """
+    ##ccompute generalized information Potential
+    GIP = generalizedInformationPotential(K, alpha)
+    H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
+    return H
+
+
+
+
+    
+    
+    
+def matrixAlphaJointEntropy(K_list, alpha):
+    """Computes the matrix based alpha joint-entropy
+    based on the spectrum of K
+        H_alpha(K) = (1/(1-alpha))log(trace(K^alpha)), 
+    where K^alpha is the matrix power of K (K is normalized).
+    
+    
+    Args:
+      K_list: a list of (N x N) Gram matrices.
+      alpha: order of the entropy.
+      normalize: Boolean (default True)
+    
+    Returns:
+      H: alpha joint entropy 
+    """
+    K = reduce(lambda x, y: x * y, K_list)
+    return matrixAlphaEntropy(K, alpha)
