@@ -94,7 +94,7 @@ def divergenceJR_weighted_rff(X,Y,sigma,alpha, n_rff):
     Hxy = itl.matrixAlphaEntropy(cov_xy, alpha=alpha)
     # Then, to approximate the joint entropy K॰Kl we use the properties of block diagonal matrices, 
     # where the trace of the entire matrix is just the sum of the trace of the 2 blocks in the matrix
-    Hj = approx.KzoKl_entropy_rff_weighted(cov_x,cov_y,alpha,sigma,n_rff)
+    Hj = approx.KzoKl_entropy_rff_weighted(cov_x,cov_y,alpha,sigma)
     # Entropy of the label or indicator variable
     Hl = approx.matrixAlphaEntropyLabel(L, alpha)
     # Finally, we compute the divergence
@@ -120,7 +120,7 @@ def divergenceJR_unweighted_rff(X,Y,sigma,alpha, n_rff):
     # where the trace of the entire matrix is just the sum of the trace of the 2 blocks in the matrix
     # cov_x was computed previously
     cov_y = approx.cov_matrix_rff(Y,sigma,n_rff,random = False)
-    Hj = approx.KzoKl_entropy_rff(cov_x,cov_y,alpha,sigma,n_rff)
+    Hj = approx.KzoKl_entropy_rff(cov_x,cov_y,alpha,sigma)
     # Entropy of the label or indicator variable
     Hl = approx.matrixAlphaEntropyLabel(L, alpha)
     # Finally, we compute the divergence
