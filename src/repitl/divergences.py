@@ -24,7 +24,7 @@ def divergenceJR_weighted(X,Y,sigma,alpha):
     N = X.shape[0]
     M = Y.shape[0]
     # Creating indicator or label variable
-    l = torch.ones(N+M, dtype=torch.long)
+    l = torch.ones(N+M, dtype=torch.long, device=X.device)
     l[N:] = 0
     # One-hot encoding the label variable
     L = torch.nn.functional.one_hot(l).type(X.dtype)
@@ -55,7 +55,7 @@ def divergenceJR_unweighted(X,Y,sigma,alpha):
     N = X.shape[0]
     M = Y.shape[0]
     # Creating indicator or label variable
-    l = torch.ones(N+M, dtype=torch.long)
+    l = torch.ones(N+M, dtype=torch.long, device=X.device)
     l[N:] = 0
     # One-hot encoding the label variable
     L = torch.nn.functional.one_hot(l).type(X.dtype)
@@ -77,7 +77,7 @@ def divergenceJR_weighted_rff(X,Y,sigma,alpha, n_rff):
     N = X.shape[0]
     M = Y.shape[0]
     # Creating indicator or label variable
-    l = torch.ones(N+M, dtype=torch.long)
+    l = torch.ones(N+M, dtype=torch.long, device=X.device)
     l[N:] = 0
     # One-hot encoding the label variable
     L = torch.nn.functional.one_hot(l).type(X.dtype)
@@ -106,7 +106,7 @@ def divergenceJR_unweighted_rff(X,Y,sigma,alpha, n_rff):
     N = X.shape[0]
     M = Y.shape[0]
     # Creating indicator or label variable
-    l = torch.ones(N+M, dtype=torch.long)
+    l = torch.ones(N+M, dtype=torch.long, device=X.device)
     l[N:] = 0
     # One-hot encoding the label variable
     L = torch.nn.functional.one_hot(l).type(X.dtype)
@@ -126,7 +126,3 @@ def divergenceJR_unweighted_rff(X,Y,sigma,alpha, n_rff):
     # Finally, we compute the divergence
     divergence = Hxy + Hl - Hj
     return divergence
-
-
-
-
