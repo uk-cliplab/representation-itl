@@ -1,0 +1,8 @@
+README.md
+setup.cfg
+setup.py
+src/representation_itl.egg-info/PKG-INFO
+src/representation_itl.egg-info/SOURCES.txt
+src/representation_itl.egg-info/dependency_links.txt
+src/representation_itl.egg-info/requires.txt
+src/representation_itl.egg-info/top_level.txt
