@@ -1,12 +1,6 @@
-
-
 import numpy as np
 import torch
 from functools import reduce
-
-
-
-
 
 def Z_rff(X,sigma,n_rff,random = True):
     '''
