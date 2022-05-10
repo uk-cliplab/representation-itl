@@ -67,7 +67,7 @@ def joint_cov_matrix_rff(X,Y,sigma,D):
     joint_cov_matrix = cov_matrix_rff(XY,sigma = sigma,D = D)
     return joint_cov_matrix
  
-def KzoKl_entropy_rff(cov_x,cov_y,alpha,sigma,n_rff):
+def KzoKl_entropy_rff(cov_x,cov_y,alpha,sigma):
     '''
     This function approximates the computation of 
     the entropy of Kz hadamard Kl (KzoKl) from the 
@@ -77,8 +77,6 @@ def KzoKl_entropy_rff(cov_x,cov_y,alpha,sigma,n_rff):
         cov_x,cov_y: Covariances of X and Y
         alpha: order of the entropy
         sigma: Kernel bandwidth
-        n_rff:  Number of Random Fourier Features 
-                computed for covariance matrices
     Returns: 
         Hj = Alpha order entropy approximation of KzoKl
 
@@ -136,40 +134,7 @@ def matrixAlphaEntropyLabel(L, alpha, weighted = False):
     
     GIP = torch.sum(torch.exp(alpha * torch.log(exy)))
     H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
-    return H
-        
-def joint_entropy_rff(cov_x,cov_y,alpha,sigma,n_rff):    
-    ex, _ = torch.symeig(cov_x, eigenvectors=True)  
-    mx = torch.gt(ex, 0.0)
-    mex = ex[mx]
-    
-    ey, _ = torch.symeig(cov_y, eigenvectors=True)  
-    my = torch.gt(ey, 0.0)
-    mey = ey[my]
-    
-    mexy = torch.cat((mex,mey))
-    mexy = mexy / (torch.sum(mex)+torch.sum(mey))
-    
-    GIP = torch.sum(torch.exp(alpha * torch.log(mexy))) 
-    Hj = (1.0 / (1.0 - alpha)) * torch.log(GIP)
-    return Hj
-
-def joint_entropy_rff_norm(cov_x,cov_y,alpha,sigma):
-    ex, _ = torch.symeig(cov_x, eigenvectors=True)  
-    mx = torch.gt(ex, 0.0)
-    mex = ex[mx]
-    mex /= 2*torch.sum(mex)
-    
-    ey, _ = torch.symeig(cov_y, eigenvectors=True)  
-    my = torch.gt(ey, 0.0)
-    mey = ey[my]
-    mey /= 2*torch.sum(mey)
-    
-    mexy = torch.cat((mex,mey))
-    
-    GIP = torch.sum(torch.exp(alpha * torch.log(mexy))) 
-    Hj = (1.0 / (1.0 - alpha)) * torch.log(GIP)
-    return Hj
+    return H        
 
 def generalizedInformationPotential(K, alpha):
     """Computes the generalized information 
@@ -193,6 +158,7 @@ def generalizedInformationPotential(K, alpha):
     GIP = torch.sum(torch.exp(alpha * torch.log(mek))) 
     return GIP
 
+
 def matrixAlphaEntropy(K, alpha):
     """Computes the matrix based alpha-entropy
     based on the spectrum of K
@@ -211,7 +177,13 @@ def matrixAlphaEntropy(K, alpha):
     GIP = generalizedInformationPotential(K, alpha)
     H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return H
- 
+
+
+
+
+    
+    
+    
 def matrixAlphaJointEntropy(K_list, alpha):
     """Computes the matrix based alpha joint-entropy
     based on the spectrum of K
