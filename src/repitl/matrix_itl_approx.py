@@ -2,6 +2,8 @@ import numpy as np
 import torch
 from functools import reduce
 
+import repitl.matrix_itl as itl
+
 def Z_rff(X,sigma,n_rff,random = True):
     '''
     Function to compute Random Fourier Features to approximate
@@ -90,11 +92,8 @@ def KzoKl_entropy_rff(cov_x,cov_y,alpha,sigma):
     mey = ey[my]
     
     mexy = torch.cat((mex,mey))
-    mexy = mexy / (torch.sum(mex)+torch.sum(mey))
-    
-    GIP = torch.sum(torch.exp(alpha * torch.log(mexy))) 
-    Hj = (1.0 / (1.0 - alpha)) * torch.log(GIP)
-    return Hj
+    GIP = itl.generalizedInformationPotential(cov_x, alpha, mexy)
+    return itl.normalizePotential(GIP)
 
 def KzoKl_entropy_rff_weighted(cov_x,cov_y,alpha,sigma):
     ex, _ = torch.symeig(cov_x, eigenvectors=True)  
@@ -108,10 +107,8 @@ def KzoKl_entropy_rff_weighted(cov_x,cov_y,alpha,sigma):
     mey /= 2*torch.sum(mey)
     
     mexy = torch.cat((mex,mey))
-    
-    GIP = torch.sum(torch.exp(alpha * torch.log(mexy))) 
-    Hj = (1.0 / (1.0 - alpha)) * torch.log(GIP)
-    return Hj
+    GIP = itl.generalizedInformationPotential(cov_x, alpha, mexy)
+    return itl.normalizePotential(GIP)
 
 def matrixAlphaEntropyLabel(L, alpha, weighted = False):
     '''
@@ -132,6 +129,5 @@ def matrixAlphaEntropyLabel(L, alpha, weighted = False):
         Ny = torch.sum(L[:,1])
         exy = torch.tensor([Nx/(Nx+Ny),Ny/(Nx+Ny)])
     
-    GIP = torch.sum(torch.exp(alpha * torch.log(exy)))
-    H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
-    return H
+    GIP = itl.generalizedInformationPotential(L, alpha, exy)
+    return itl.normalizePotential(GIP)

@@ -7,7 +7,7 @@ and Matrix Renyi's alpha divergence
 import torch
 from functools import reduce
 
-def generalizedInformationPotential(K, alpha):
+def generalizedInformationPotential(K, alpha, ek=None):
     """Computes the generalized information 
     potential of order alpha
           GIP_alpha(K) = trace(K_^alpha), 
@@ -22,13 +22,17 @@ def generalizedInformationPotential(K, alpha):
     Returns:
       GIP: generalized information potential of alpha order. 
     """
-    ek, _ = torch.linalg.eigh(K)  
+    if ek is None:
+        ek, _ = torch.linalg.eigh(K)
     mk = torch.gt(ek, 0.0)
     mek = ek[mk]
     mek = mek / torch.sum(mek)
     GIP = torch.sum(torch.exp(alpha * torch.log(mek))) 
     return GIP
-    
+
+def normalizePotential(GIP, alpha):
+    return (1.0 / (1.0 - alpha)) * torch.log(GIP)
+
 def matrixAlphaEntropy(K, alpha):
     """Computes the matrix based alpha-entropy
     based on the spectrum of K
@@ -43,12 +47,8 @@ def matrixAlphaEntropy(K, alpha):
     Returns:
       H: alpha entropy 
     """
-    ##ccompute generalized information Potential
-    GIP = generalizedInformationPotential(K, alpha)
-    H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
-    return H
-    
-    
+    return normalizePotential(generalizedInformationPotential(K, alpha), alpha)
+
 def matrixAlphaJointEntropy(K_list, alpha):
     """Computes the matrix based alpha joint-entropy
     based on the spectrum of K
