@@ -76,7 +76,6 @@ def matrixAlphaConditionalEntropy(Kx, Ky, alpha):
     return Hxy - Hy
 
 def matrixAlphaMutualInformation(Kx, Ky, alpha):
-    
     Kxy = Kx * Ky 
     Hxy = matrixAlphaEntropy(Kxy, alpha=alpha)
     Hx = matrixAlphaEntropy(Kx, alpha=alpha)

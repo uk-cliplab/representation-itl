@@ -50,9 +50,9 @@ def squaredEuclideanDistance(X, Y):
       D: a N x M array where 
     """
     G12 = torch.matmul(X, Y.t())
-    G11 = torch.sum(torch.square(X), axis=1, keepdim=True) 
-    G22 = torch.sum(torch.square(Y), axis=1, keepdim=True) 
-    D = G11 - G12 * torch.tensor(2, dtype=X.dtype) + G22.t()
+    G11 = torch.sum(torch.square(X), axis=1, keepdim=True)
+    G22 = torch.sum(torch.square(Y), axis=1, keepdim=True)
+    D = G11 - G12 * torch.tensor(2, dtype=X.dtype, device=X.device) + G22.t()
     return D
     
 
@@ -90,4 +90,3 @@ def normalizeGramMatrix(G):
     G_diag = torch.sqrt(torch.diag(G))
     G_hat = G / G_diag[:, None] / G_diag[None, :]
     return G_hat
-

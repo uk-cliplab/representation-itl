@@ -17,14 +17,14 @@ def Z_rff(X,sigma,n_rff,random = True):
     if not random:
         # Set seed to generate the same set of random weights
         torch.manual_seed(5)
-    n_rff = torch.tensor(n_rff)
-    gamma = torch.tensor(1/(2*sigma**2))
+    n_rff = torch.tensor(n_rff, device=X.device)
+    gamma = torch.tensor(1/(2*sigma**2), device=X.device)
     # Number of features in X
     d = X.shape[1]
     # Random Fourier features
-    w = torch.sqrt(2*gamma)*torch.randn(d, n_rff,dtype=X.dtype)
-    b = 2*np.pi*torch.rand(n_rff,dtype=X.dtype)
-    Z = torch.sqrt(2/n_rff)*torch.cos(torch.matmul(X,w) + b)
+    w = torch.sqrt(2*gamma)*torch.randn(d, n_rff, dtype=X.dtype, device=X.device)
+    b = 2*np.pi*torch.rand(n_rff, dtype=X.dtype, device=X.device)
+    Z = torch.sqrt(2/n_rff)*torch.cos(torch.matmul(X, w) + b)
     return Z
 
 def cov_matrix_rff(X,sigma,n_rff,random = True):
