@@ -108,9 +108,6 @@ def schatten1Divergence(Kx, Ky, Kxy, normalize=False):
     D = 1 - schattenNorm(Kxy, p=1.0)
     return D
 
-
-    
-
 def matrixAlphaDivergence(Kx, Ky, Kxy, alpha, normalize=False):
     """Computes the matrix based alpha-divergence
         H_alpha(K) = (1/(1-alpha))log(trace(K^alpha)), 

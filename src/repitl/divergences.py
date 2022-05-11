@@ -1,5 +1,4 @@
 import torch as torch
-from torch.autograd import grad
 import numpy as np
 
 import repitl.kernel_utils as ku
