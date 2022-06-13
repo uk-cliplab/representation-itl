@@ -9,7 +9,7 @@ python -m pip install git+https://github.com/uk-cliplab/representation-itl.git
 ## Editable Installation
 Following this procedure, the git repository is clone and editably installed. This lets you edit or add to the library files without having to reinstall.
 
-1) Download git repository: ```git clone git@github.com:uk-cliplab/representation-itl.git```
+1) Download git repository: ```git clone https://github.com/uk-cliplab/representation-itl.git```
 
 2) Move to folder:  ```cd representation-itl```
 
