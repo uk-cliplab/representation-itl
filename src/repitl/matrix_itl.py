@@ -7,7 +7,7 @@ and Matrix Renyi's alpha divergence
 import torch
 from functools import reduce
 
-def generalizedInformationPotential(K, alpha):
+def generalizedInformationPotential(K, alpha, allow_frobenius_speedup=True):
     """Computes the generalized information 
     potential of order alpha
           GIP_alpha(K) = trace(K_^alpha), 
@@ -22,11 +22,32 @@ def generalizedInformationPotential(K, alpha):
     Returns:
       GIP: generalized information potential of alpha order. 
     """
+    if allow_frobenius_speedup and alpha == 2:
+        return frobeniusGIP(K)
+    
     ek, _ = torch.linalg.eigh(K)  
     mk = torch.gt(ek, 0.0)
     mek = ek[mk]
     mek = mek / torch.sum(mek)
-    GIP = torch.sum(torch.exp(alpha * torch.log(mek))) 
+    GIP = torch.sum(torch.exp(alpha * torch.log(mek)))
+    return GIP
+
+
+def frobeniusGIP(K):
+    """
+    calculates entropy using the frobenius norm trick
+    equivalent result to calling generalizedInformationPotential(K, alpha=2), but this is much faster
+
+    todo: due to symmetricity of K, can be twice as fast be only considering the lower triangle
+    
+    Args:
+        K: (N x N) Gram matrix
+    """
+    GIP = torch.sum(torch.pow(K, 2))
+    
+    # normalize so that the sum of eigenvalues is 1
+    GIP /= K.shape[0]**2
+    
     return GIP
     
 def matrixAlphaEntropy(K, alpha):
@@ -43,7 +64,7 @@ def matrixAlphaEntropy(K, alpha):
     Returns:
       H: alpha entropy 
     """
-    ##ccompute generalized information Potential
+    ##ccompute generalized information Potential    
     GIP = generalizedInformationPotential(K, alpha)
     H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return H
