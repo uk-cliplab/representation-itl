@@ -232,9 +232,9 @@ def computeSangersRule(X, M, compute_eigenvalues=True, lr= 5e-8, tolerance=1e-6,
         eigenvalues = torch.norm(cov@W_sanger, dim=0) / torch.norm(W_sanger, dim=0)
         eigenvalues, _ = eigenvalues.sort()
 
-        return eigenvalues, W_sanger
+        return eigenvalues, W_sanger.detach()
     
-    return W_sanger
+    return W_sanger.detach()
 
 
 
@@ -298,7 +298,7 @@ class eigenGamePCA():
         XV = self.transform(x)
         rewards = XV 
         C = torch.matmul(XV.T, XV) 
-        C /= torch.diag(C, 0).view(self.n_comp, 1)
+        C = C / torch.diag(C, 0).view(self.n_comp, 1)
         penalties = torch.matmul(XV, torch.triu(C, 1))
         nablaV = 2*torch.matmul(x.T, rewards - penalties)
         nablaVR = nablaV - torch.sum(nablaV * self.V, axis=1, keepdims=True) * self.V
@@ -306,7 +306,10 @@ class eigenGamePCA():
         self.V = self.V / torch.sqrt(torch.sum(torch.square(self.V), axis=0, keepdims=True))
         
     def transform(self, x):
-        return torch.matmul(x, self.V)
+        result = torch.matmul(x, self.V)
+        self.V = self.V.detach()
+        
+        return result
     
 class rffGaussian():
     def __init__(self, n_in_dim, n_comp=None, sigma=1.0):
@@ -315,10 +318,15 @@ class rffGaussian():
             self.n_comp = 1024
         else:
             self.n_comp = n_comp
-        W_ = np.random.normal(size=(self.n_in_dim, n_comp // 2)) * sigma
-        self.W = torch.tensor(W_, requires_grad=False, dtype=torch.float)
+        
+        self.sigma = sigma
+
     def __call__(self, x):
+        self.W = torch.randn(size=(self.n_in_dim, self.n_comp // 2), requires_grad=True)
+        self.W = self.W * self.sigma
+        
         WX = torch.matmul(x, self.W)
+        self.W.detach()
         return torch.cat((torch.cos(WX), torch.sin(WX)), axis=1) * np.sqrt(2 / self.n_comp)
 
 class eigenGameEntropy():
@@ -347,10 +355,14 @@ class eigenGameEntropy():
         self.pca.update(x)
         z = self.pca.transform(x)
         z_var = torch.mean(torch.square(z), axis=0)
-        z_var /= torch.sum(z_var) 
+        z_var = z_var / torch.sum(z_var) 
         self.eigvals = (1 - self.beta) * self.eigvals + self.beta * z_var
+
         return self.entropy()
 
     def entropy(self):
         gip = torch.sum(torch.pow(self.eigvals, self.alpha))
+        
+        self.eigvals = self.eigvals.detach()
+        
         return torch.log(gip) / (1 - self.alpha)
