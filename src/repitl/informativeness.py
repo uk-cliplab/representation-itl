@@ -40,7 +40,7 @@ def informativeness(K,alpha,variant = 'renyi', average = False, n_eig = 1):
     return I
 
 def spectrumInformativeness(Ev, alpha,variant = 'renyi', average = False, K = None, n_eig = 1): 
-     """ Computes alpha order spectrum informativeness for 
+    """ Computes alpha order spectrum informativeness for 
     a set of normalized eigen-values sorted descendingly (sum of them must be 1).
     Args:
       Ev: Set of eigen-values.
@@ -184,7 +184,7 @@ def nonInformativeAlphaEntropy(N, alpha=1.01):
 
 def separability(K,alpha, c = 2, variant = 'renyi'):
     
-     """ Computes alpha order separability measurements for 
+    """ Computes alpha order separability measurements for 
     correlation matrices. In general separability can be defined as 
     some sort of "distance" between a correlation matrix and its "closest" 
     separable matrix. 
