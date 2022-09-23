@@ -30,13 +30,10 @@ def squaredEuclideanDistanceTiled(x: Tensor,
     y = y.unsqueeze(0) # (1, M, dim)
     tiled_x = x.expand(N, M, dim)
     tiled_y = y.expand(N, M, dim)
-    return (tiled_x - tiled_y).pow(2).sum(2)
+    D = (tiled_x - tiled_y).pow(2).sum(2) 
+    return torch.relu(D)
 
-
-## Define Gaussian kernel a la Luichi
-
-
-def squaredEuclideanDistance(X, Y):
+def squaredEuclideanDistanceMatrix(X, Y):
     """ Compute matrix with pairwise squared Euclidean distances 
     between the rows of X and the rows of Y
                  
@@ -53,9 +50,43 @@ def squaredEuclideanDistance(X, Y):
     G11 = torch.sum(torch.square(X), axis=1, keepdim=True)
     G22 = torch.sum(torch.square(Y), axis=1, keepdim=True)
     D = G11 - G12 * torch.tensor(2, dtype=X.dtype, device=X.device) + G22.t()
-    return D
-    
+    return torch.relu(D)
 
+def squaredEuclideanDistance(X, Y, tiled=True):
+    if tiled:
+        D = squaredEuclideanDistanceTiled(X,Y)
+    else:
+        D = squaredEuclideanDistanceMatrix(X,Y)
+    return D
+
+def manhatanDistanceTiled(x: Tensor, y: Tensor) -> Tensor:
+    """ Compute matrix with pairwise squared Euclidean distances 
+    between the rows of X and the rows of Y
+                 
+                 D_{i,j} = ||x_i - y_j ||^2
+
+    Args:
+      X: A tensor with N as the first dim.
+      Y: a tensor with M as the first dim.
+      the remaining dimensions of X and Y must match
+    Returns:
+      D: a N x M array where 
+    """
+    N = x.shape[0] 
+    M = y.shape[0]
+    dim = x.shape[1]
+    x = x.unsqueeze(1) # (N, 1, dim)
+    y = y.unsqueeze(0) # (1, M, dim)
+    tiled_x = x.expand(N, M, dim)
+    tiled_y = y.expand(N, M, dim)
+    return torch.abs((tiled_x - tiled_y)).sum(2)
+
+
+## Define Gaussian kernel a la Luichi
+
+
+    
+    
 def gaussianKernel(X, Y, sigma):
     """ Compute the Gram matrix using a Gaussian kernel.
     
@@ -71,6 +102,56 @@ def gaussianKernel(X, Y, sigma):
     """
     D = squaredEuclideanDistance(X,Y)
     return  torch.exp( -D / (2.0 * sigma**2))
+
+def cauchyKernel(X, Y, sigma):
+    """ Compute the Gram matrix using a Gaussian kernel.
+    
+    where K(i, j) = exp( - (1/(2 * sigma^2)) * || X[i,::] - Y[j, ::] ||^2 )
+    Args:
+      X: A tensor with N as the first dim.
+      Y: a tensor with M as the first dim.
+      sigma: scale parameter (scalar)
+             
+    
+    Returns:
+      K: a N x M gram matrix
+    """
+    D = squaredEuclideanDistance(X,Y)
+    return  1 / ( 1 + D / (sigma**2))
+
+
+
+def ellipticalLaplacianKernel(X, Y, sigma):
+    """ Compute the Gram matrix using a Gaussian kernel.
+    
+    where K(i, j) = exp( - (1/ sigma) * || X[i,::] - Y[j, ::] || )
+    Args:
+      X: A tensor with N as the first dim.
+      Y: a tensor with M as the first dim.
+      sigma: scale parameter (scalar)
+             
+    
+    Returns:
+      K: a N x M gram matrix
+    """
+    D = squaredEuclideanDistance(X,Y)
+    return  torch.exp( -torch.sqrt(D / 2) / sigma)
+
+def factorizedLaplacianKernel(X, Y, sigma):
+    """ Compute the Gram matrix using a Gaussian kernel.
+    
+    where K(i, j) = exp( - (1/ sigma) * || X[i,::] - Y[j, ::] || )
+    Args:
+      X: A tensor with N as the first dim.
+      Y: a tensor with M as the first dim.
+      sigma: scale parameter (scalar)
+             
+    
+    Returns:
+      K: a N x M gram matrix
+    """
+    D = manhatanDistanceTiled(X,Y)
+    return  torch.exp( -D / (sigma))
 
 
 # Add diagonal elements of matrix to have multiple backend compatibility
