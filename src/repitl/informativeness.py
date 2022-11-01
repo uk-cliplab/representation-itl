@@ -41,10 +41,12 @@ def informativeness(K,alpha,variant = 'renyi', average = False, n_eig = 1):
     
 def mutualInformativeness(Kx,Ky,alpha,variant = 'renyi', average = True):
     Kxy = Kx*Ky
-    Ix = informativeness(Kx,alpha=alpha,variant = variant, average = average)
-    Iy = informativeness(Kx,alpha=alpha,variant = variant, average = average)
+    # Ix = informativeness(Kx,alpha=alpha,variant = variant, average = average)
+    # Iy = informativeness(Kx,alpha=alpha,variant = variant, average = average)
+    Hx = itl.matrixAlphaEntropy(Kx, alpha=alpha)
+    Hy = itl.matrixAlphaEntropy(Kx, alpha=alpha)    
     Ixy = informativeness(Kxy,alpha=alpha,variant = variant, average = average)
-    I = Ixy - Ix - Iy
+    I = Ixy + Hx + Hy
     return I
 
 
