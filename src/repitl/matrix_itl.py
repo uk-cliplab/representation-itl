@@ -7,7 +7,7 @@ and Matrix Renyi's alpha divergence
 import torch
 from functools import reduce
 
-def generalizedInformationPotential(K, alpha, allow_frobenius_speedup=True):
+def generalizedInformationPotential(K, alpha, allow_frobenius_speedup=False):
     """Computes the generalized information 
     potential of order alpha
           GIP_alpha(K) = trace(K_^alpha), 

@@ -35,9 +35,18 @@ def informativeness(K,alpha,variant = 'renyi', average = False, n_eig = 1):
     mk = torch.lt(Ev, 0.0)
     Ev[mk] = 0.0
     n = Ev.shape[0]
-    Ev = Ev/torch.sum(Ev)
+    Ev = Ev/torch.nansum(Ev.detach())
     I = spectrumInformativeness(Ev,alpha = alpha, variant = variant, average = average, K = K, n_eig = n_eig)
     return I
+    
+def mutualInformativeness(Kx,Ky,alpha,variant = 'renyi', average = True):
+    Kxy = Kx*Ky
+    Ix = informativeness(Kx,alpha=alpha,variant = variant, average = average)
+    Iy = informativeness(Kx,alpha=alpha,variant = variant, average = average)
+    Ixy = informativeness(Kxy,alpha=alpha,variant = variant, average = average)
+    I = Ixy - Ix - Iy
+    return I
+
 
 def spectrumInformativeness(Ev, alpha,variant = 'renyi', average = False, K = None, n_eig = 1): 
     """ Computes alpha order spectrum informativeness for 
@@ -61,6 +70,13 @@ def spectrumInformativeness(Ev, alpha,variant = 'renyi', average = False, K = No
         H   = (1/(1-alpha))*torch.log(alpha_norm(Ev,alpha))
         Hni = (1/(1-alpha))*torch.log(alpha_norm(Evni,alpha))
         I = Hni - H
+    elif variant == 'renyiDivergence':
+        EvAlpha = Ev**(alpha)
+        EvniAlpha = Evni**(1-alpha)
+        EvXEvni = EvAlpha*EvniAlpha
+        renyiDivergence = (1/(alpha-1))*torch.log(EvXEvni.nansum())
+        I = renyiDivergence
+        
     elif variant == 'ratio':
         if alpha > 1:
             I = alpha_norm(Ev,alpha)/alpha_norm(Evni,alpha)
@@ -182,7 +198,7 @@ def nonInformativeAlphaEntropy(N, alpha=1.01):
     return Hni
 
 
-def separability(K,alpha, c = 2, variant = 'renyi'):
+def separability(K,alpha, c = 2, variant = 'renyi',typeSeparable = 'proportion'):
     
     """ Computes alpha order separability measurements for 
     correlation matrices. In general separability can be defined as 
@@ -202,18 +218,24 @@ def separability(K,alpha, c = 2, variant = 'renyi'):
     mk = torch.lt(Ev, 0.0)
     Ev[mk] = 0.0
     n = Ev.shape[0]
-    Ev = Ev/torch.sum(Ev)
-    S = eigenSeparability(Ev, alpha = alpha, c = c)
+    Ev = Ev/torch.nansum(Ev.detach())
+    S = eigenSeparability(Ev, alpha = alpha, c = c, typeSeparable = typeSeparable)
     return S
 
-def eigenSeparability(Ev,alpha, variant = 'renyi', c = 2):
+def eigenSeparability(Ev,alpha, variant = 'renyi', typeSeparable = 'proportion',c = 2):
 
-    EvSep = separableSpectrum(Ev,c = c)
+    EvSep = separableSpectrum(Ev,c = c, typeSeparable = typeSeparable)
 
     if variant == 'renyi':
         H   = (1/(1-alpha))*torch.log(alpha_norm(Ev,alpha))
         Hsep = (1/(1-alpha))*torch.log(alpha_norm(EvSep,alpha))
-        S = H - Hsep
+        S = torch.abs(H - Hsep)
+    elif variant == 'renyiDivergence':
+        EvsepAlpha = EvSep.abs()**(alpha)
+        EvAlpha = Ev.abs()**(1-alpha)
+        EvXEvsep = EvAlpha*EvsepAlpha
+        renyiDivergence = (1/(alpha-1))*torch.log(EvXEvsep.nansum())
+        S = renyiDivergence
     elif variant == 'ratio':
         if alpha < 1:
             S = alpha_norm(Ev,alpha)/alpha_norm(EvSep,alpha)
@@ -230,9 +252,19 @@ def eigenSeparability(Ev,alpha, variant = 'renyi', c = 2):
         raise ValueError(" Got a false variant value")
     return S
 
-def separableSpectrum(Ev,c = 2):
+def separableSpectrum(Ev,c = 2, r = 0.9, typeSeparable = 'proportion'):
     n = Ev.shape[0]
     Evsep = torch.zeros_like(Ev)
-    portion = torch.sum(Ev[c:]) / c
-    Evsep[:c] = Ev[:c] + portion
+    if typeSeparable == 'proportion':
+        portion = torch.nansum(Ev[c:]) / c
+        Evsep[:c] = Ev[:c] + portion
+    elif typeSeparable == 'fixed':
+        Evsep[:c] = 1/c
+    elif typeSeparable == 'relaxed':
+        Evsep[:c] = r/c 
+        Evsep[c:] = (1-r)/(n-c)
+    else:
+        raise ValueError(" Got a false variant value")
+               
+
     return Evsep
