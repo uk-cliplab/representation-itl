@@ -44,8 +44,31 @@ def matrixAlphaEntropy(K, alpha):
       H: alpha entropy 
     """
     ##ccompute generalized information Potential
-    GIP = generalizedInformationPotential(K, alpha)
-    H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
+    if alpha == 1:
+        H = matrixVonNeumanEntropy(K)
+    else:
+        GIP = generalizedInformationPotential(K, alpha)
+        H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
+    return H
+
+def matrixVonNeumanEntropy(K):
+    """Computes the matrix based VonNeuman-entropy
+    based on the spectrum of K
+        H(K) = -trace(K \log(K)), 
+    where \log(K) is the matrix logarithm of K (K is normalized).
+    
+    
+    Args:
+      K: (N x N) Gram matrix.
+    
+    Returns:
+      H: vonNeuman entropy 
+    """
+    ek, _ = torch.linalg.eigh(K)  
+    mk = torch.gt(ek, 0.0)
+    mek = ek[mk]
+    mek = mek / torch.sum(mek)
+    H = -torch.sum(mek * torch.log(mek)) 
     return H
     
     

@@ -82,10 +82,8 @@ def manhatanDistanceTiled(x: Tensor, y: Tensor) -> Tensor:
     return torch.abs((tiled_x - tiled_y)).sum(2)
 
 
-## Define Gaussian kernel a la Luichi
+## Kernel definitions
 
-
-    
     
 def gaussianKernel(X, Y, sigma):
     """ Compute the Gram matrix using a Gaussian kernel.
@@ -106,7 +104,7 @@ def gaussianKernel(X, Y, sigma):
 def cauchyKernel(X, Y, sigma):
     """ Compute the Gram matrix using a Gaussian kernel.
     
-    where K(i, j) = exp( - (1/(2 * sigma^2)) * || X[i,::] - Y[j, ::] ||^2 )
+    where K(i, j) = 1 / (1 + (1 / sigma^2)*|| X[i,::] - Y[j, ::] ||^2 )
     Args:
       X: A tensor with N as the first dim.
       Y: a tensor with M as the first dim.
@@ -124,7 +122,7 @@ def cauchyKernel(X, Y, sigma):
 def ellipticalLaplacianKernel(X, Y, sigma):
     """ Compute the Gram matrix using a Gaussian kernel.
     
-    where K(i, j) = exp( - (1/ sigma) * || X[i,::] - Y[j, ::] || )
+    where K(i, j) = exp( - (1/ sigma) * || X[i,::] - Y[j, ::] ||_2 )
     Args:
       X: A tensor with N as the first dim.
       Y: a tensor with M as the first dim.
@@ -140,7 +138,7 @@ def ellipticalLaplacianKernel(X, Y, sigma):
 def factorizedLaplacianKernel(X, Y, sigma):
     """ Compute the Gram matrix using a Gaussian kernel.
     
-    where K(i, j) = exp( - (1/ sigma) * || X[i,::] - Y[j, ::] || )
+    where K(i, j) = exp( - (1/ sigma) * || X[i,::] - Y[j, ::] ||_1 )
     Args:
       X: A tensor with N as the first dim.
       Y: a tensor with M as the first dim.
@@ -151,8 +149,15 @@ def factorizedLaplacianKernel(X, Y, sigma):
       K: a N x M gram matrix
     """
     D = manhatanDistanceTiled(X,Y)
-    return  torch.exp( -D / (sigma))
+    return  torch.exp( -D / (torch.sqrt(torch.tensor(2, dtype=D.dtype)) * sigma))
 
+
+def softmaxKernel(X, Y, sigma):
+    Sx = torch.nn.functional.softmax(X, dim=-1)
+    Sx = Sx / torch.sqrt(torch.sum(torch.square(Sx), axis=1, keepdims=True))
+    Sy = torch.nn.functional.softmax(Y, dim=-1)
+    Sy = Sy / torch.sqrt(torch.sum(torch.square(Sy), axis=1, keepdims=True))
+    return torch.matmul(Sx, Sy.t())
 
 # Add diagonal elements of matrix to have multiple backend compatibility
      
