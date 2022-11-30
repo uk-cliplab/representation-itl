@@ -59,11 +59,11 @@ def squaredEuclideanDistance(X, Y, tiled=True):
         D = squaredEuclideanDistanceMatrix(X,Y)
     return D
 
-def manhatanDistanceTiled(x: Tensor, y: Tensor) -> Tensor:
-    """ Compute matrix with pairwise squared Euclidean distances 
+def manhattanDistanceTiled(x: Tensor, y: Tensor) -> Tensor:
+    """ Compute matrix with pairwise Manhattan distances 
     between the rows of X and the rows of Y
                  
-                 D_{i,j} = ||x_i - y_j ||^2
+                 D_{i,j} = ||x_i - y_j ||_1
 
     Args:
       X: A tensor with N as the first dim.
@@ -148,7 +148,7 @@ def factorizedLaplacianKernel(X, Y, sigma):
     Returns:
       K: a N x M gram matrix
     """
-    D = manhatanDistanceTiled(X,Y)
+    D = manhattanDistanceTiled(X,Y)
     return  torch.exp( -D / (torch.sqrt(torch.tensor(2, dtype=D.dtype)) * sigma))
 
 
