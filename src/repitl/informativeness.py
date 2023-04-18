@@ -9,6 +9,7 @@ import repitl.divergences as div
 import repitl.kernel_utils as ku
 import repitl.matrix_itl_approx as approx
 import repitl.matrix_itl as itl
+# import arpack
 
 
 def informativeness(K,alpha,variant = 'renyi', average = False, n_eig = 1):
@@ -29,15 +30,44 @@ def informativeness(K,alpha,variant = 'renyi', average = False, n_eig = 1):
     Returns:
       I: Informativeness. 
     """
-    
-    Ev, _ = torch.linalg.eigh(K)
-    Ev, _ = Ev.sort(descending = True)
-    mk = torch.lt(Ev, 0.0)
-    Ev[mk] = 0.0
-    n = Ev.shape[0]
-    Ev = Ev/torch.sum(Ev)
-    I = spectrumInformativeness(Ev,alpha = alpha, variant = variant, average = average, K = K, n_eig = n_eig)
+    if (variant == 'renyiDivergence') and (alpha == 2):
+        I = alpha2renyiDivergenceInformativeness(K,average = average)
+    else:
+        Ev, _ = torch.linalg.eigh(K)
+        Ev, _ = Ev.sort(descending = True)
+        mk = torch.lt(Ev, 0.0)
+        Ev[mk] = 0.0
+        n = Ev.shape[0]
+        Ev = Ev/torch.nansum(Ev.detach())
+        I = spectrumInformativeness(Ev,alpha = alpha, variant = variant, average = average, K = K, n_eig = n_eig)
     return I
+    
+def mutualInformativeness(Kx,Ky,alpha,variant = 'renyi', average = True):
+    Kxy = (Kx+Ky)/2
+    # Hx = itl.matrixAlphaEntropy(Kx.detach(),alpha = alpha)
+    # Hy = itl.matrixAlphaEntropy(Ky.detach(),alpha = alpha)
+    # Ix = informativeness(Kx,alpha=alpha,variant = variant, average = average)
+    # Iy = informativeness(Ky,alpha=alpha,variant = variant, average = average)
+    # MI = itl.matrixAlphaMutualInformation(Kx, Ky, alpha = alpha)   
+    Ixy = informativeness(Kxy,alpha=alpha,variant = variant, average = average)
+    I = Ixy
+    return I
+
+def alpha2renyiDivergenceInformativeness(K,average = True):
+    n = K.shape[0]
+    if average:
+        delta = (K.sum()-n) / (n**2-n)
+    else:
+        # check arpack for computing first eigen value, lobpcg seems to be unstable
+        lambda1,_  = torch.lobpcg(K, k=1, largest = True)
+        delta = (lambda1 - 1)/(n-1)
+    beta = delta/(1-delta+delta*n)
+    alpha = (1/(1-delta))
+    ones = torch.ones((n,1), device=K.device)
+    
+    I = torch.log((alpha)/n) + torch.log((torch.norm(K,p='fro'))**2 - (beta)*(torch.norm(K@ones,2))**2)
+    return I
+
 
 def spectrumInformativeness(Ev, alpha,variant = 'renyi', average = False, K = None, n_eig = 1): 
     """ Computes alpha order spectrum informativeness for 
@@ -61,6 +91,13 @@ def spectrumInformativeness(Ev, alpha,variant = 'renyi', average = False, K = No
         H   = (1/(1-alpha))*torch.log(alpha_norm(Ev,alpha))
         Hni = (1/(1-alpha))*torch.log(alpha_norm(Evni,alpha))
         I = Hni - H
+    elif variant == 'renyiDivergence':
+        EvAlpha = Ev**(alpha)
+        EvniAlpha = Evni**(1-alpha)
+        EvXEvni = EvAlpha*EvniAlpha
+        renyiDivergence = (1/(alpha-1))*torch.log(EvXEvni.nansum())
+        I = renyiDivergence
+        
     elif variant == 'ratio':
         if alpha > 1:
             I = alpha_norm(Ev,alpha)/alpha_norm(Evni,alpha)
@@ -72,7 +109,7 @@ def spectrumInformativeness(Ev, alpha,variant = 'renyi', average = False, K = No
         Hni = (1/(q-1))*(1-alpha_norm(Evni,alpha))
         I = Hni - H   
     elif variant == 'distance':
-        I = alpha_norm(Ev - Evni,alpha) 
+        I = alpha_norm((Ev - Evni).abs(),alpha) 
     else:
         raise ValueError(" Got a false variant value")
     return I
@@ -123,7 +160,7 @@ def nonInformativeSpectrum(Ev ,average = False, K = None, n_eig = 1):
         Evni[0] = 1/n + (n-1)*avg/n
         Evni[1:] = (1-Evni[0])/(n-1)
     else:
-        Evni[:n_eig] = Ev[:n_eig]
+        Evni[:n_eig] = Ev[:n_eig] 
         Evni[n_eig:] = torch.mean(Ev[n_eig:]) # (1-Ev[0])/(n-1)
     return Evni
 
@@ -159,8 +196,10 @@ def closestNonInformative(K, average = True):
         off_diag = avg*torch.ones([n,n])
         N = diag + off_diag
     else:
-        ev1,_ = torch.lobpcg(K, k=1)
-        delta = (n*ev1 -1)/(n-1)
+        ev1,_ = torch.lobpcg(K, k=1) ### this function is not reliable
+        # Ev, _ = torch.linalg.eigh(K)
+        # ev1 = Ev[-1:]
+        delta = (ev1 -1)/(n-1)
         diag  = torch.diag(torch.ones(n) - delta)
         off_diag = delta*torch.ones([n,n])
         N = diag + off_diag               
@@ -182,7 +221,7 @@ def nonInformativeAlphaEntropy(N, alpha=1.01):
     return Hni
 
 
-def separability(K,alpha, c = 2, variant = 'renyi'):
+def separability(K,alpha, c = 2, variant = 'renyi',typeSeparable = 'proportion'):
     
     """ Computes alpha order separability measurements for 
     correlation matrices. In general separability can be defined as 
@@ -202,18 +241,24 @@ def separability(K,alpha, c = 2, variant = 'renyi'):
     mk = torch.lt(Ev, 0.0)
     Ev[mk] = 0.0
     n = Ev.shape[0]
-    Ev = Ev/torch.sum(Ev)
-    S = eigenSeparability(Ev, alpha = alpha, c = c)
+    Ev = Ev/torch.nansum(Ev.detach())
+    S = eigenSeparability(Ev, alpha = alpha, c = c, typeSeparable = typeSeparable)
     return S
 
-def eigenSeparability(Ev,alpha, variant = 'renyi', c = 2):
+def eigenSeparability(Ev,alpha, variant = 'renyi', typeSeparable = 'proportion',c = 2):
 
-    EvSep = separableSpectrum(Ev,c = c)
+    EvSep = separableSpectrum(Ev,c = c, typeSeparable = typeSeparable)
 
     if variant == 'renyi':
         H   = (1/(1-alpha))*torch.log(alpha_norm(Ev,alpha))
         Hsep = (1/(1-alpha))*torch.log(alpha_norm(EvSep,alpha))
-        S = H - Hsep
+        S = torch.abs(H - Hsep)
+    elif variant == 'renyiDivergence':
+        EvsepAlpha = EvSep.abs()**(alpha)
+        EvAlpha = Ev.abs()**(1-alpha)
+        EvXEvsep = EvAlpha*EvsepAlpha
+        renyiDivergence = (1/(alpha-1))*torch.log(EvXEvsep.nansum())
+        S = renyiDivergence
     elif variant == 'ratio':
         if alpha < 1:
             S = alpha_norm(Ev,alpha)/alpha_norm(EvSep,alpha)
@@ -230,9 +275,19 @@ def eigenSeparability(Ev,alpha, variant = 'renyi', c = 2):
         raise ValueError(" Got a false variant value")
     return S
 
-def separableSpectrum(Ev,c = 2):
+def separableSpectrum(Ev,c = 2, r = 0.9, typeSeparable = 'proportion'):
     n = Ev.shape[0]
     Evsep = torch.zeros_like(Ev)
-    portion = torch.sum(Ev[c:]) / c
-    Evsep[:c] = Ev[:c] + portion
+    if typeSeparable == 'proportion':
+        portion = torch.nansum(Ev[c:]) / c
+        Evsep[:c] = Ev[:c] + portion
+    elif typeSeparable == 'fixed':
+        Evsep[:c] = 1/c
+    elif typeSeparable == 'relaxed':
+        Evsep[:c] = r/c 
+        Evsep[c:] = (1-r)/(n-c)
+    else:
+        raise ValueError(" Got a false variant value")
+               
+
     return Evsep
