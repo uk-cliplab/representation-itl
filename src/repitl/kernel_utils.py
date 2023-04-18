@@ -74,6 +74,9 @@ def softmaxKernel(X, Y):
 
 def exponentialKernel(X, Y, sigma):
     return torch.exp( X @ Y.T / sigma)
+
+def linearKernel(X, Y, sigma):
+    return (X @ Y.T) / sigma
  
 def squaredEuclideanDistanceTiled(x: Tensor,
                                   y: Tensor) -> Tensor:
