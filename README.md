@@ -4,6 +4,10 @@ Below are two different methods of installation. The first is simpler, while the
 ## Installation Directly from Github
 ```
 python -m pip install git+https://github.com/uk-cliplab/representation-itl.git
+
+OR
+
+pip3 install -e git+https://github.com/uk-cliplab/representation-itl.git#egg=representation-itl
 ```
 
 ## Editable Installation
