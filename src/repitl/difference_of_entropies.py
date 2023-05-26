@@ -15,7 +15,7 @@ def permuteGram(K):
     K = K[:, idx]
     return K
 
-def doe(Kx, Ky, alpha, n_iters=10):
+def doe(Kx, Ky, alpha, n_iters=10, shouldReturnComponents = False):
     """
     Computes the difference of entropy equation of the following form. Let P be a random permutation matrix
     
@@ -28,7 +28,10 @@ def doe(Kx, Ky, alpha, n_iters=10):
     for i in range(n_iters):
         H_perm = itl.matrixAlphaJointEntropy([Kx, permuteGram(Ky)], alpha=alpha)
         H_perm_avg = H_perm_avg + (H_perm / n_iters)
-        
+    
+    if shouldReturnComponents:
+        return H_perm_avg - H, H, H_perm_avg
+    
     return H_perm_avg - H
 
 def dip(Kx, Ky, alpha, n_iters=10, allow_exact_compute=True):

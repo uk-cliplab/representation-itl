@@ -65,7 +65,7 @@ def matrixAlphaEntropy(K, alpha):
       H: alpha entropy 
     """
     ##ccompute generalized information Potential    
-    GIP = generalizedInformationPotential(K, alpha)
+    GIP = generalizedInformationPotential(K, alpha).real
     H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return H
     
@@ -165,3 +165,71 @@ def matrixAlphaDivergence(Kx, Ky, Kxy, alpha, normalize=False):
     return D
 
 
+"""
+Below functions taken from https://github.com/uk-cliplab/repMutualInformation/blob/main/ITL_utils.py
+"""
+
+def vonNeumannEntropy(K, lowRank = False, rank = None):
+    n = K.shape[0]
+    ek, _ = torch.linalg.eigh(K)
+    if lowRank:
+        ek_lr = torch.zeros_like(ek)
+        ek_lr[-rank:] = ek[-rank:]
+        remainder = ek.sum() - ek_lr.sum()
+        ek_lr[:(n-rank)] = remainder/(n-rank)
+        mk = torch.gt(ek_lr, 0.0)
+        mek = ek_lr[mk]
+    else:
+        mk = torch.gt(ek, 0.0)
+        mek = ek[mk]
+
+    mek = mek/mek.sum()   
+    H = -1*torch.sum(mek*torch.log2(mek))
+    return H
+
+def vonNeumannEigenValues(Ev, lowRank = False, rank_proportion = 0.9):
+    # rate: proportion of eigen values to keep
+    # eigenvalues should be ordered descendengly 
+    if lowRank:
+        n_eig = int(rank_proportion*Ev.shape[0])
+        Ev_lr = torch.zeros_like(Ev)
+        Ev_lr[:n_eig] = Ev[:n_eig]
+        Ev_lr[n_eig:] = torch.mean(Ev[n_eig:]) # make equal the last n_eig eigenvalues
+        Ev_lr = Ev_lr / torch.sum(Ev_lr)
+        H = -1*torch.sum(Ev_lr*torch.log(Ev_lr))
+    else:
+        mk = torch.gt(Ev, 0.0)
+        mek = Ev[mk]
+        mek = mek / torch.sum(mek)
+        H = -1*torch.sum(mek*torch.log(mek))
+    return H
+
+
+
+def rowWiseKroneckerProduct(X,Y):
+    if not (X.ndim == 2 and Y.ndim == 2):
+        raise ValueError("The both arrays should be 2-dimensional.")
+
+    if not X.shape[0] == X.shape[0]:
+        raise ValueError("The number of rows for both arrays "
+                         "should be equal.")
+
+    X = X.T 
+    Y = Y.T
+    c = X[..., :, None, :] * Y[..., None, :, :]
+    transposedKR = c.reshape((-1,) + c.shape[2:])
+    return transposedKR.T
+
+def repMutualInformation(X,Y):
+    n = X.shape[0] # X and Y should have the same number of samples
+    phiX = X
+    phiY = Y
+    phiXY = rowWiseKroneckerProduct(phiX,phiY)
+    covX = (1/n)*phiX.T@phiX
+    covY = (1/n)*phiY.T@phiY
+    covXY = (1/n)*phiXY.T@phiXY
+    Hx = vonNeumannEntropy(covX)
+    Hy = vonNeumannEntropy(covY)
+    Hxy = vonNeumannEntropy(covXY)
+    MI = Hx + Hy - Hxy
+    return MI
