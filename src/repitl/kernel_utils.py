@@ -69,7 +69,7 @@ def gaussianKernel(X, Y, sigma):
     Returns:
       K: a N x M gram matrix
     """
-    D = squaredEuclideanDistance(X,Y)
+    D = squaredEuclideanDistanceTiled(X,Y)
     return  torch.exp( -D / (2.0 * sigma**2))
 
 
