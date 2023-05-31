@@ -145,3 +145,24 @@ def repJSD_cov(covX,covY):
     Hz = itl.vonNeumannEntropy((covX+covY)/2)
     JSD =  (Hz - 0.5*(Hx + Hy))
     return JSD
+
+def repKL(X,Y):
+    # X and Y are outputs of a Fourier Feature Layer
+    Cx = torch.matmul(torch.t(X),X)
+    Cy = torch.matmul(torch.t(Y),Y)
+    Lx, Qx = torch.linalg.eigh(Cx)
+    Ly, Qy = torch.linalg.eigh(Cy)
+    logLx = torch.log(Lx)
+    logLy = torch.log(Ly)
+    logCx = torch.matmul(Qx,torch.matmul(torch.diag(logLx),Qx.t())) 
+    logCy = torch.matmul(Qy,torch.matmul(torch.diag(logLy),Qy.t())) 
+    return torch.trace(torch.matmul(Cx,logCx - logCy))
+
+def repKL_cov(Cx,Cy):
+    Lx, Qx = torch.linalg.eigh(Cx)
+    Ly, Qy = torch.linalg.eigh(Cy)
+    logLx = torch.log(Lx)
+    logLy = torch.log(Ly)
+    logCx = torch.matmul(Qx,torch.matmul(torch.diag(logLx),Qx.t())) 
+    logCy = torch.matmul(Qy,torch.matmul(torch.diag(logLy),Qy.t())) 
+    return torch.trace(torch.matmul(Cx,logCx - logCy)) 
