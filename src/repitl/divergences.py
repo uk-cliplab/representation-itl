@@ -147,9 +147,9 @@ def repJSD_cov(covX,covY):
     return JSD
 
 def repKL(X,Y):
-    # X and Y are outputs of a Fourier Feature Layer
-    Cx = torch.matmul(torch.t(X),X)
-    Cy = torch.matmul(torch.t(Y),Y)
+    # X and Y are outputs of a Fourier Feature Layer. They should be the same size
+    Cx = (1/X.shape[0])*torch.matmul(torch.t(X),X)
+    Cy = (1/Y.shape[0])*torch.matmul(torch.t(Y),Y)
     Lx, Qx = torch.linalg.eigh(Cx)
     Ly, Qy = torch.linalg.eigh(Cy)
     logLx = torch.log(Lx)
