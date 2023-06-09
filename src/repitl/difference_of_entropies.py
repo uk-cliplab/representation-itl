@@ -2,7 +2,6 @@
 
 import torch
 import repitl.matrix_itl as itl
-import matplotlib.pyplot as plt
 
 def permuteGram(K):
     """
