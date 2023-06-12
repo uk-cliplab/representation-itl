@@ -125,3 +125,44 @@ def divergenceJR_unweighted_rff(X,Y,sigma,alpha, n_rff):
     # Finally, we compute the divergence
     divergence = Hxy + Hl - Hj
     return divergence
+
+def repJSD(X,Y):
+    phiX = X
+    phiY = Y
+    # Creating the mixture of both distributions
+    # phiZ =  torch.cat((phiX,phiY))
+    covX = torch.matmul(torch.t(phiX),phiX)
+    covY = torch.matmul(torch.t(phiY),phiY)
+    Hx = itl.vonNeumannEntropy(covX)
+    Hy = itl.vonNeumannEntropy(covY)
+    Hz = itl.vonNeumannEntropy((covX+covY)/2)
+    JSD =  (Hz - 0.5*(Hx + Hy))
+    return JSD
+
+def repJSD_cov(covX,covY):
+    Hx = itl.vonNeumannEntropy(covX)
+    Hy = itl.vonNeumannEntropy(covY)
+    Hz = itl.vonNeumannEntropy((covX+covY)/2)
+    JSD =  (Hz - 0.5*(Hx + Hy))
+    return JSD
+
+def repKL(X,Y):
+    # X and Y are outputs of a Fourier Feature Layer. They should be the same size
+    Cx = (1/X.shape[0])*torch.matmul(torch.t(X),X)
+    Cy = (1/Y.shape[0])*torch.matmul(torch.t(Y),Y)
+    Lx, Qx = torch.linalg.eigh(Cx)
+    Ly, Qy = torch.linalg.eigh(Cy)
+    logLx = torch.log(Lx)
+    logLy = torch.log(Ly)
+    logCx = torch.matmul(Qx,torch.matmul(torch.diag(logLx),Qx.t())) 
+    logCy = torch.matmul(Qy,torch.matmul(torch.diag(logLy),Qy.t())) 
+    return torch.trace(torch.matmul(Cx,logCx - logCy))
+
+def repKL_cov(Cx,Cy):
+    Lx, Qx = torch.linalg.eigh(Cx)
+    Ly, Qy = torch.linalg.eigh(Cy)
+    logLx = torch.log(Lx)
+    logLy = torch.log(Ly)
+    logCx = torch.matmul(Qx,torch.matmul(torch.diag(logLx),Qx.t())) 
+    logCy = torch.matmul(Qy,torch.matmul(torch.diag(logLy),Qy.t())) 
+    return torch.trace(torch.matmul(Cx,logCx - logCy)) 
