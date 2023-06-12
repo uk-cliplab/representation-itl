@@ -64,7 +64,7 @@ def matrixAlphaEntropy(K, alpha):
     Returns:
       H: alpha entropy 
     """
-    ##ccompute generalized information Potential    
+    # compute generalized information Potential
     GIP = generalizedInformationPotential(K, alpha).real
     H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return H

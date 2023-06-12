@@ -101,6 +101,52 @@ def squaredEuclideanDistanceTiled(x: Tensor,
     tiled_y = y.expand(N, M, dim)
     return (tiled_x - tiled_y).pow(2).sum(2)
 
+def innerProductTiled(x: Tensor, y: Tensor) -> Tensor:
+    """ Compute matrix with pairwise squared Euclidean distances 
+    between the rows of X and the rows of Y
+                 
+                 D_{i,j} = ||x_i - y_j ||^2
+
+    Args:
+      X: A tensor with N as the first dim.
+      Y: a tensor with M as the first dim.
+      the remaining dimensions of X and Y must match
+    Returns:
+      D: a N x M array where 
+    """
+    N = x.shape[0] 
+    M = y.shape[0]
+    dim = x.shape[1]
+    x = x.unsqueeze(1) # (N, 1, dim)
+    y = y.unsqueeze(0) # (1, M, dim)
+    tiled_x = x.expand(N, M, dim)
+    tiled_y = y.expand(N, M, dim)
+    return (tiled_x * tiled_y).sum(2)
+
+def innerProductNormalizedTiled(x: Tensor, y: Tensor) -> Tensor:
+    """ Compute matrix with pairwise squared Euclidean distances 
+    between the rows of X and the rows of Y
+                 
+                 D_{i,j} = ||x_i - y_j ||^2
+
+    Args:
+      X: A tensor with N as the first dim.
+      Y: a tensor with M as the first dim.
+      the remaining dimensions of X and Y must match
+    Returns:
+      D: a N x M array where 
+    """
+    N = x.shape[0] 
+    M = y.shape[0]
+    dim = x.shape[1]
+    x = x.unsqueeze(1) # (N, 1, dim)
+    y = y.unsqueeze(0) # (1, M, dim)
+    tiled_x = x.expand(N, M, dim)
+    tiled_y = y.expand(N, M, dim)
+    norm_x = tiled_x.pow(2).sum(2).sqrt()
+    norm_y = tiled_y.pow(2).sum(2).sqrt()
+    return (tiled_x * tiled_y / (norm_x * norm_y)).sum(2)
+
 
 ## Define Gaussian kernel a la Luichi
 
@@ -125,7 +171,7 @@ def squaredEuclideanDistance(X, Y):
     return D
     
 
-def gaussianKernel(X, Y, sigma, calcOption='tiled'):
+def gaussianKernel(X, Y, sigma=None, calcOption='tiled'):
     """ Compute the Gram matrix using a Gaussian kernel.
     
     where K(i, j) = exp( - (1/(2 * sigma^2)) * || X[i,::] - Y[j, ::] ||^2 )
@@ -142,6 +188,9 @@ def gaussianKernel(X, Y, sigma, calcOption='tiled'):
         D = squaredEuclideanDistanceTiled(X, Y)
     else:
         D = squaredEuclideanDistance(X, Y)
+    if sigma is None:
+        sigma = torch.sqrt(torch.tensor(X.shape[1]/2))
+        
     return  torch.exp( -D / (2.0 * sigma**2))
 
 # Add diagonal elements of matrix to have multiple backend compatibility
