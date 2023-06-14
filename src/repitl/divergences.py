@@ -159,14 +159,14 @@ def repJRD(X,Y,alpha):
     Hx = itl.matrixAlphaEntropy(covX, alpha=alpha)
     Hy = itl.matrixAlphaEntropy(covY, alpha=alpha)
     Hz = itl.matrixAlphaEntropy((pix*covX+piy*covY), alpha=alpha)
-    JSD =  (Hz - (pix*Hx + piy*Hy))
+    JRD =  (Hz - (pix*Hx + piy*Hy))
     return JRD
 
 def repJRD_cov(covX,covY,alpha,pix= 0.5,piy= 0.5):
     Hx = itl.matrixAlphaEntropy(covX, alpha=alpha)
     Hy = itl.matrixAlphaEntropy(covY, alpha=alpha)
     Hz = itl.matrixAlphaEntropy((pix*covX+piy*covY), alpha=alpha)
-    JSD =  (Hz - (pix*Hx + piy*Hy))
+    JRD =  (Hz - (pix*Hx + piy*Hy))
     return JRD
 
 def repKL(X,Y):
