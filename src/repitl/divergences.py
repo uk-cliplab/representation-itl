@@ -146,6 +146,29 @@ def repJSD_cov(covX,covY):
     JSD =  (Hz - 0.5*(Hx + Hy))
     return JSD
 
+def repJRD(X,Y,alpha):
+    phiX = X
+    phiY = Y
+    N = phiX.shape[0]
+    M = phiY.shape[0]
+    pix = N/(N+M)
+    piy = M/(N+M)
+    # rewrite covX and covY using @ instead of matmul and.T instead of t()
+    covX = 1/N*(phiX.T @ phiX)
+    covY = 1/M*(phiY.T @ phiY)
+    Hx = itl.matrixAlphaEntropy(covX, alpha=alpha)
+    Hy = itl.matrixAlphaEntropy(covY, alpha=alpha)
+    Hz = itl.matrixAlphaEntropy((pix*covX+piy*covY), alpha=alpha)
+    JSD =  (Hz - (pix*Hx + piy*Hy))
+    return JRD
+
+def repJRD_cov(covX,covY,alpha,pix= 0.5,piy= 0.5):
+    Hx = itl.matrixAlphaEntropy(covX, alpha=alpha)
+    Hy = itl.matrixAlphaEntropy(covY, alpha=alpha)
+    Hz = itl.matrixAlphaEntropy((pix*covX+piy*covY), alpha=alpha)
+    JSD =  (Hz - (pix*Hx + piy*Hy))
+    return JRD
+
 def repKL(X,Y):
     # X and Y are outputs of a Fourier Feature Layer. They should be the same size
     Cx = (1/X.shape[0])*torch.matmul(torch.t(X),X)

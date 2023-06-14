@@ -225,11 +225,20 @@ def repMutualInformation(X,Y):
     phiX = X
     phiY = Y
     phiXY = rowWiseKroneckerProduct(phiX,phiY)
-    covX = (1/n)*phiX.T@phiX
-    covY = (1/n)*phiY.T@phiY
-    covXY = (1/n)*phiXY.T@phiXY
-    Hx = vonNeumannEntropy(covX)
-    Hy = vonNeumannEntropy(covY)
-    Hxy = vonNeumannEntropy(covXY)
-    MI = Hx + Hy - Hxy
+    if type == 'covariance':
+        covX = (1/n)*phiX.T@phiX
+        covY = (1/n)*phiY.T@phiY
+        covXY = (1/n)*phiXY.T@phiXY
+        Hx = vonNeumannEntropy(covX)
+        Hy = vonNeumannEntropy(covY)
+        Hxy = vonNeumannEntropy(covXY)
+        MI = Hx + Hy - Hxy
+    elif type == 'kernel':
+        Kx = (1/n)*phiX@phiX.T
+        Ky = (1/n)*phiY@phiY.T
+        Kxy = (1/n)*phiXY@phiXY.T
+        Hx = vonNeumannEntropy(Kx)
+        Hy = vonNeumannEntropy(Ky)
+        Hxy = vonNeumannEntropy(Kxy)
+        MI = Hx + Hy - Hxy
     return MI
