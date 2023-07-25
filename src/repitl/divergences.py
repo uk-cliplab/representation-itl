@@ -126,24 +126,32 @@ def divergenceJR_unweighted_rff(X,Y,sigma,alpha, n_rff):
     divergence = Hxy + Hl - Hj
     return divergence
 
-def repJSD(X,Y):
+def repJSD(X,Y, weighted = False):
     phiX = X
     phiY = Y
+    N = phiX.shape[0]
+    M = phiY.shape[0]
+    if weighted:
+        pix = 0.5
+        piy = 0.5
+    else:
+        pix = N/(N+M)
+        piy = M/(N+M)
     # Creating the mixture of both distributions
     # phiZ =  torch.cat((phiX,phiY))
-    covX = torch.matmul(torch.t(phiX),phiX)
-    covY = torch.matmul(torch.t(phiY),phiY)
+    covX = 1/N*(phiX.T @ phiX)
+    covY = 1/M*(phiY.T @ phiY)
     Hx = itl.vonNeumannEntropy(covX)
     Hy = itl.vonNeumannEntropy(covY)
-    Hz = itl.vonNeumannEntropy((covX+covY)/2)
-    JSD =  (Hz - 0.5*(Hx + Hy))
+    Hz = itl.vonNeumannEntropy(pix*covX+piy*covY)
+    JSD =  (Hz - (pix*Hx + piy*Hy))
     return JSD
 
-def repJSD_cov(covX,covY):
+def repJSD_cov(covX,covY, pix = 0.5, piy = 0.5):
     Hx = itl.vonNeumannEntropy(covX)
     Hy = itl.vonNeumannEntropy(covY)
-    Hz = itl.vonNeumannEntropy((covX+covY)/2)
-    JSD =  (Hz - 0.5*(Hx + Hy))
+    Hz = itl.vonNeumannEntropy(pix*covX+piy*covY)
+    JSD =  (Hz - (pix*Hx + piy*Hy))
     return JSD
 
 def repJRD(X,Y,alpha):
