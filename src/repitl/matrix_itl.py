@@ -184,7 +184,7 @@ def vonNeumannEntropy(K, lowRank = False, rank = None):
         mek = ek[mk]
 
     mek = mek/mek.sum()   
-    H = -1*torch.sum(mek*torch.log2(mek))
+    H = -1*torch.sum(mek*torch.log(mek))
     return H
 
 def vonNeumannEigenValues(Ev, lowRank = False, rank_proportion = 0.9):
@@ -220,7 +220,7 @@ def rowWiseKroneckerProduct(X,Y):
     transposedKR = c.reshape((-1,) + c.shape[2:])
     return transposedKR.T
 
-def repMutualInformation(X,Y):
+def repMutualInformation(X,Y, type = 'covariance'):
     n = X.shape[0] # X and Y should have the same number of samples
     phiX = X
     phiY = Y

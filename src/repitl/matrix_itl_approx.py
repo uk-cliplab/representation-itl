@@ -366,3 +366,23 @@ class eigenGameEntropy():
         self.eigvals = self.eigvals.detach()
         
         return torch.log(gip) / (1 - self.alpha)
+    
+
+## Quadratic approximations of von neumann entropy
+
+def fastVonNeumannEntropy(K, typeApprox = 'radial'):
+    """Computes the von Neumann entropy of a kernel matrix K according to https://arxiv.org/pdf/1811.11087.pdf
+    usinf radial projections """
+    n = K.shape[0]
+    K = (1/torch.trace(K))*K # make sure the trace is one (normalized kernel)
+    frob_norm = torch.linalg.matrix_norm(K, ord='fro')
+
+    if typeApprox == 'radial':
+        kg = torch.sqrt(frob_norm**2 - (1/n))
+        lambda1 = np.sqrt((n-1)/n)*kg + (1/n)
+        lambda2 = 1/n - kg/(np.sqrt(n*(n-1))) # this eigenvalue is repeated (n-1) times
+        H = -lambda1*torch.log(lambda1) - (n-1)*lambda2*torch.log(lambda2)
+    if typeApprox == 'finger':
+        lambdamax  = torch.lobpcg(K, k=1, largest=True, method='ortho')[0]
+        H = - (torch.log(lambdamax))* (1-frob_norm**2)
+    return H

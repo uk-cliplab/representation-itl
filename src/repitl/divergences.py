@@ -154,6 +154,28 @@ def repJSD_cov(covX,covY, pix = 0.5, piy = 0.5):
     JSD =  (Hz - (pix*Hx + piy*Hy))
     return JSD
 
+def repJSD_approx(X,Y, weighted = False, typeApprox = 'radial'):
+    phiX = X
+    phiY = Y
+    N = phiX.shape[0]
+    M = phiY.shape[0]
+    if weighted:
+        pix = 0.5
+        piy = 0.5
+    else:
+        pix = N/(N+M)
+        piy = M/(N+M)
+    # Creating the mixture of both distributions
+    # phiZ =  torch.cat((phiX,phiY))
+    covX = 1/N*(phiX.T @ phiX)
+    covY = 1/M*(phiY.T @ phiY)
+
+    Hx = approx.fastVonNeumannEntropy(covX,typeApprox)
+    Hy = approx.fastVonNeumannEntropy(covY,typeApprox)
+    Hz = approx.fastVonNeumannEntropy(pix*covX+piy*covY,typeApprox)
+    JSD =  (Hz - (pix*Hx + piy*Hy))
+    return JSD
+
 def repJRD(X,Y,alpha):
     phiX = X
     phiY = Y
@@ -178,11 +200,13 @@ def repJRD_cov(covX,covY,alpha,pix= 0.5,piy= 0.5):
     return JRD
 
 def repKL(X,Y):
-    # X and Y are outputs of a Fourier Feature Layer. They should be the same size
+    # X and Y are outputs of a Fourier Feature Layer. They should be the same size every vector should be norm 1
     Cx = (1/X.shape[0])*torch.matmul(torch.t(X),X)
     Cy = (1/Y.shape[0])*torch.matmul(torch.t(Y),Y)
     Lx, Qx = torch.linalg.eigh(Cx)
     Ly, Qy = torch.linalg.eigh(Cy)
+    Lx[Lx<=0] = 1e-10 # this is to avoid nans in the log 
+    Ly[Ly<=0] = 1e-10    
     logLx = torch.log(Lx)
     logLy = torch.log(Ly)
     logCx = torch.matmul(Qx,torch.matmul(torch.diag(logLx),Qx.t())) 
@@ -192,6 +216,8 @@ def repKL(X,Y):
 def repKL_cov(Cx,Cy):
     Lx, Qx = torch.linalg.eigh(Cx)
     Ly, Qy = torch.linalg.eigh(Cy)
+    Lx[Lx<=0] = 1e-10 # this is to avoid nans in the log 
+    Ly[Ly<=0] = 1e-10   
     logLx = torch.log(Lx)
     logLy = torch.log(Ly)
     logCx = torch.matmul(Qx,torch.matmul(torch.diag(logLx),Qx.t())) 
