@@ -7,7 +7,7 @@ import torch
 from typing import TypeVar
 
 ## Define Gaussian kernel a la Ermon
-Tensor = TypeVar(torch.tensor)
+Tensor = torch.tensor
 
 def manhattanDistanceTiled(x: Tensor, y: Tensor) -> Tensor:
     """ Compute matrix with pairwise Manhattan distances 
