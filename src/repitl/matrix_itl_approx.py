@@ -1,15 +1,19 @@
 import numpy as np
 import torch
-from functools import reduce
 
 """
 BEGIN RFF FUNCTIONS
 """
 
-def Z_rff(X,sigma,n_rff,random = True):
+
+def Z_rff(X,
+          sigma,
+          n_rff,
+          random=True
+          ):
     '''
     Function to compute Random Fourier Features to approximate
-    the mapping induced by a Gaussian Kernel. 
+    the mapping induced by a Gaussian Kernel.
     Args:
         X: set of points for computing covariance matrix
         sigma: Kernel bandwidth
@@ -26,12 +30,19 @@ def Z_rff(X,sigma,n_rff,random = True):
     # Number of features in X
     d = X.shape[1]
     # Random Fourier features
-    w = torch.sqrt(2*gamma)*torch.randn(d, n_rff, dtype=X.dtype, device=X.device)
+    w = torch.sqrt(2*gamma)*torch.randn(d, n_rff,
+                                        dtype=X.dtype,
+                                        device=X.device)
     b = 2*np.pi*torch.rand(n_rff, dtype=X.dtype, device=X.device)
     Z = torch.sqrt(2/n_rff)*torch.cos(torch.matmul(X, w) + b)
     return Z
 
-def cov_matrix_rff(X,sigma,n_rff,random = True):
+
+def cov_matrix_rff(X,
+                   sigma,
+                   n_rff,
+                   random=True
+                   ):
     '''
     Function to approximate the covariance matrix (via Random Fourier Features)
     of the fatures induced by a Gaussian Kernel
@@ -42,13 +53,19 @@ def cov_matrix_rff(X,sigma,n_rff,random = True):
         random: Parameter to control the generation of random fourier features
     Returns:
         cov_matrix: Covariance matrix
-    '''    
-    Z = Z_rff(X,sigma,n_rff,random = random)
+    '''
+    Z = Z_rff(X, sigma, n_rff, random=random)
     # Covariance matrix
-    cov_matrix = torch.matmul(torch.t(Z),Z)
-    return cov_matrix / Z.shape[0] 
+    cov_matrix = torch.matmul(torch.t(Z), Z)
+    return cov_matrix / Z.shape[0]
 
-def cov_matrix_rff_weighted(X,sigma,n_rff,D,random = True):
+
+def cov_matrix_rff_weighted(X,
+                            sigma,
+                            n_rff,
+                            D,
+                            random=True
+                            ):
     """
     Function to approximate the covariance matrix (via Random Fourier Features)
     of the fatures induced by a Gaussian Kernel in a weighted form.
@@ -56,143 +73,168 @@ def cov_matrix_rff_weighted(X,sigma,n_rff,D,random = True):
         X: set of points for computing covariance matrix
         sigma: Kernel bandwidth
         n_rff:  Number of Random Fourier Features to compute
-        D: Weight matrix 
+        D: Weight matrix
         random: Parameter to control the generation of random fourier features
     Returns:
         cov_matrix: Weighted covariance matrix
     """
-    Z  = Z_rff(X,sigma,n_rff,random = random)
-    Z_ = D*Z 
-    cov_matrix = torch.matmul(torch.t(Z_),Z_)
+    Z = Z_rff(X, sigma, n_rff, random=random)
+    Z_ = D*Z
+    cov_matrix = torch.matmul(torch.t(Z_), Z_)
     return cov_matrix / Z_.shape[0]
 
-def joint_cov_matrix_rff(X,Y,sigma,D):
-    XY = torch.cat((X,Y),1)
-    joint_cov_matrix = cov_matrix_rff(XY,sigma = sigma,D = D)
+
+def joint_cov_matrix_rff(X,
+                         Y,
+                         sigma,
+                         D
+                         ):
+    XY = torch.cat((X, Y), 1)
+    joint_cov_matrix = cov_matrix_rff(XY, sigma=sigma, D=D)
     return joint_cov_matrix
- 
-def KzoKl_entropy_rff(cov_x,cov_y,alpha,sigma):
+
+
+def KzoKl_entropy_rff(cov_x,
+                      cov_y,
+                      alpha,
+                      sigma
+                      ):
     '''
-    This function approximates the computation of 
-    the entropy of Kz hadamard Kl (KzoKl) from the 
+    This function approximates the computation of
+    the entropy of Kz hadamard Kl (KzoKl) from the
     covariance matrices of X and Y
     Z = [X;Y]
     Args:
         cov_x,cov_y: Covariances of X and Y
         alpha: order of the entropy
         sigma: Kernel bandwidth
-    Returns: 
+    Returns:
         Hj = Alpha order entropy approximation of KzoKl
-
     '''
-    ex, _ = torch.symeig(cov_x, eigenvectors=True)  
+    ex, _ = torch.symeig(cov_x, eigenvectors=True)
     mx = torch.gt(ex, 0.0)
     mex = ex[mx]
-    
-    ey, _ = torch.symeig(cov_y, eigenvectors=True)  
+
+    ey, _ = torch.symeig(cov_y, eigenvectors=True)
     my = torch.gt(ey, 0.0)
     mey = ey[my]
-    
-    mexy = torch.cat((mex,mey))
+
+    mexy = torch.cat((mex, mey))
     mexy = mexy / (torch.sum(mex)+torch.sum(mey))
-    
-    GIP = torch.sum(torch.exp(alpha * torch.log(mexy))) 
+
+    GIP = torch.sum(torch.exp(alpha * torch.log(mexy)))
     Hj = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return Hj
 
-def KzoKl_entropy_rff_weighted(cov_x,cov_y,alpha,sigma):
-    ex, _ = torch.symeig(cov_x, eigenvectors=True)  
+
+def KzoKl_entropy_rff_weighted(cov_x,
+                               cov_y,
+                               alpha,
+                               sigma
+                               ):
+    ex, _ = torch.symeig(cov_x, eigenvectors=True)
     mx = torch.gt(ex, 0.0)
     mex = ex[mx]
     mex /= 2*torch.sum(mex)
-    
-    ey, _ = torch.symeig(cov_y, eigenvectors=True)  
+
+    ey, _ = torch.symeig(cov_y, eigenvectors=True)
     my = torch.gt(ey, 0.0)
     mey = ey[my]
     mey /= 2*torch.sum(mey)
-    
-    mexy = torch.cat((mex,mey))
-    
-    GIP = torch.sum(torch.exp(alpha * torch.log(mexy))) 
+
+    mexy = torch.cat((mex, mey))
+
+    GIP = torch.sum(torch.exp(alpha * torch.log(mexy)))
     Hj = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return Hj
 
-def matrixAlphaEntropyLabel(L, alpha, weighted = False):
+
+def matrixAlphaEntropyLabel(L,
+                            alpha,
+                            weighted=False
+                            ):
     '''
     This function compute the entropy of the indicator variable
-    L, without calculating the eigenvalues, which are constant 
+    L, without calculating the eigenvalues, which are constant
     according to the distribution of the classes.
-    Args: 
+    Args:
         L: Indicator varibale one-hot-encoded
         alpha: order of the entropy
         weighted: parameter to control the weight given to each class
-    Returns: 
-        H: Alpha order entropy 
+    Returns:
+        H: Alpha order entropy
     '''
     if weighted:
-        exy = torch.tensor([0.5,0.5])
+        exy = torch.tensor([0.5, 0.5])
     else:
-        Nx = torch.sum(L[:,0])
-        Ny = torch.sum(L[:,1])
-        exy = torch.tensor([Nx/(Nx+Ny),Ny/(Nx+Ny)])
-    
+        Nx = torch.sum(L[:, 0])
+        Ny = torch.sum(L[:, 1])
+        exy = torch.tensor([Nx / (Nx + Ny), Ny / (Nx + Ny)])
+
     GIP = torch.sum(torch.exp(alpha * torch.log(exy)))
     H = (1.0 / (1.0 - alpha)) * torch.log(GIP)
     return H
+
 
 """
 BEGIN ENTROPY UTIL FUNCTIONS
 """
 
+
 def upperBoundEntropy(ek, N, alpha, lower_distribution='ignore'):
     """
-    Computes the entropy from a set of eigenvalues. 
+    Computes the entropy from a set of eigenvalues.
     If lower distribution is not ignore, an upper bound it computed
-    
+
     Args:
         ek: A (perhaps partial) set of eigenvalues
         N: The cardinality of the full set of eigenvalues
         alpha: What alpha to use for the norm
-        lower_distribution: how to approximate the remaining (K.shape[0] - M) eigenvalues
-        
+        lower_distribution: how to approximate the remaining
+        (K.shape[0] - M) eigenvalues
+
     Returns:
         An upper bound of entropy based on the eigenvalues
     """
-        
-    if lower_distribution not in ['uniform', 'normal', 'exponential', 'ignore']:
+    if lower_distribution not in ['uniform',
+                                  'normal',
+                                  'exponential',
+                                  'ignore']:
         raise ValueError("Invalid choice of lower ev distribution!")
-        
+
     mk = torch.gt(ek, 0.0)
     mek = ek[mk]
-    
-    if torch.sum(mek) < 1 and lower_distribution !='ignore':
+
+    if torch.sum(mek) < 1 and lower_distribution != 'ignore':
         n_unknown = N - len(mek)
-        
+
         if lower_distribution == 'uniform':
-            lower_ev = ( (1 - torch.sum(mek) ) / (n_unknown) ) * torch.ones(n_unknown)
+            lower_ev = ((1 - torch.sum(mek)) / (n_unknown)) * torch.ones(n_unknown)
         elif lower_distribution == 'normal':
-            lower_ev = torch.abs(torch.empty(n_unknown).normal_(mean=0,std=0.1))
+            lower_ev = torch.abs(torch.empty(n_unknown).normal_(mean=0, std=0.1))
             lower_ev /= torch.sum(lower_ev)
             lower_ev *= 1 - torch.sum(mek)
-            
+
         elif lower_distribution == 'exponential':
             lower_ev = torch.abs(torch.empty(n_unknown).exponential_(lambd=2))
             lower_ev /= torch.sum(lower_ev)
             lower_ev *= 1 - torch.sum(mek)
-            
+
         full_spectrum = torch.cat((mek, lower_ev), 0)
         GIP = torch.sum(torch.exp(alpha * torch.log(full_spectrum)))
-            
+
         return (1.0 / (1.0 - alpha)) * torch.log(GIP)
-    
+
     else:
         mek = mek / torch.sum(mek)
         GIP = torch.sum(torch.exp(alpha * torch.log(mek)))
         return (1.0 / (1.0 - alpha)) * torch.log(GIP)
-    
+
+
 """
 BEGIN SANGER RULE FUNCTIONS
 """
+
 
 def computeSangersRule(X, M, compute_eigenvalues=True, lr= 5e-8, tolerance=1e-6, max_iters=5e3, initial_weights=None):
     """
