@@ -2,3 +2,4 @@
 src/repitl/__pycache__/
 src/*.egg-info
 .idea
+*~

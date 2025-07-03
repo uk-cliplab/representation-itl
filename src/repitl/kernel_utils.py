@@ -1,16 +1,14 @@
 """
 Kernel utilities
-Miscelaneous functions to compute kernels using tensorflow
- 
+Miscelaneous functions to compute kernels using pytorch
 """
 import torch
-from typing import TypeVar
 
-## Define Gaussian kernel a la Ermon
+# Define Gaussian kernel a la Ermon
 Tensor = torch.tensor
 
 def manhattanDistanceTiled(x: Tensor, y: Tensor) -> Tensor:
-    """ Compute matrix with pairwise Manhattan distances 
+    """ Compute matrix with pairwise Manhattan distances
     between the rows of X and the rows of Y
                  
                  D_{i,j} = ||x_i - y_j ||_1
@@ -148,9 +146,7 @@ def innerProductNormalizedTiled(x: Tensor, y: Tensor) -> Tensor:
     return (tiled_x * tiled_y / (norm_x * norm_y)).sum(2)
 
 
-## Define Gaussian kernel a la Luichi
-
-
+# Define Gaussian kernel a la Luichi
 def squaredEuclideanDistance(X, Y):
     """ Compute matrix with pairwise squared Euclidean distances 
     between the rows of X and the rows of Y
