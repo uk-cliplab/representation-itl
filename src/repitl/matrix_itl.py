@@ -1,17 +1,18 @@
-"""
-matrix itl
+"""matrix itl.
+
 Define our core quantities. Matrix Renyi's alpha entropy
 and Matrix Renyi's alpha divergence
 """
 
-import torch
 from functools import reduce
+
+import torch
 
 
 def generalizedInformationPotential(K, alpha, allow_frobenius_speedup=True):
-    '''
-    Computes the generalized information
-    potential of order alpha
+    """Compute the generalized information potential of order alpha.
+
+    The generalized information potential is defined as
           GIP_alpha(K) = trace(K_^alpha),
     where K^alpha is a matrix raised to the alpha power.
     K_ is normalized as K_ = K / trace(K), such that
@@ -23,7 +24,7 @@ def generalizedInformationPotential(K, alpha, allow_frobenius_speedup=True):
 
     Returns:
     GIP: generalized information potential of alpha order.
-    '''
+    """
     if allow_frobenius_speedup and alpha == 2:
         return frobeniusGIP(K)
 
@@ -36,17 +37,18 @@ def generalizedInformationPotential(K, alpha, allow_frobenius_speedup=True):
 
 
 def frobeniusGIP(K):
-    '''
-    Calculates entropy using the frobenius norm trick
-    equivalent result to calling generalizedInformationPotential(K, alpha=2),
-    but this is much faster
+    """Calculate entropy using the frobenius norm trick.
+
+    This is a faster way to compute the generalized information potential and
+    gives the equivalent result to calling
+    generalizedInformationPotential(K, alpha=2).
 
     TODO: due to symmetricity of K, can be twice as fast be only considering
     the lower triangle
 
     Args:
         K: (N x N) Gram matrix
-    '''
+    """
     GIP = torch.sum(torch.pow(K, 2))
     # normalize so that the sum of eigenvalues is 1
     GIP /= K.shape[0]**2

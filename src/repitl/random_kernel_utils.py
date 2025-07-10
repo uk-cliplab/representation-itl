@@ -1,11 +1,12 @@
-'''
-random kernel utils
+"""Random kernel utils.
+
 Define randomzed kernel functions
 for faster computation
-'''
+"""
+
+import numpy as np
 
 import torch
-import numpy as np
 
 # TODO: make this compatible with torch.nn.Module class
 # Make sure the seed are outside of this module
@@ -13,6 +14,8 @@ import numpy as np
 
 
 class rffGaussian():
+    """Random Fourier Features for Gaussian kernel."""
+
     def __init__(self,
                  n_in_dim,
                  n_comp=256,
