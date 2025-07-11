@@ -1,14 +1,18 @@
-# Implementations of the difference of entropies equation below, as well as some variations
+'''
+Implementations of the difference of matrix entropies equation below,
+as well as some variations
+'''
 
 import torch
 import repitl.matrix_itl as itl
+
 
 def permuteGram(K):
     """
     Randomly permutes the rows and columns of a square matrix
     """
     
-    assert K.shape[0] == K.shape[1], f"matrix dimensions must be the same"
+    assert K.shape[0] == K.shape[1], 'matrix dimensions must be the same'
     idx = torch.randperm(K.shape[0])
     K = K[idx, :]
     K = K[:, idx]
@@ -16,7 +20,8 @@ def permuteGram(K):
 
 def doe(Kx, Ky, alpha, n_iters=10, shouldReturnComponents = False):
     """
-    Computes the difference of entropy equation of the following form. Let P be a random permutation matrix
+    Computes the difference of entropy equation of the following form.
+    Let P be a random permutation matrix
     
     doe(Kx, Ky) = EXPECTATION[ H_alpha(Kx, P Ky P) - H_alpha(Kx, Ky)]
     """
@@ -35,7 +40,8 @@ def doe(Kx, Ky, alpha, n_iters=10, shouldReturnComponents = False):
 
 def dip(Kx, Ky, alpha, n_iters=10, allow_exact_compute=True):
     """
-    Computes the difference of information potential (DIP) equation of the following form. Let P be a random permutation matrix
+    Computes the difference of information potential (DIP) equation
+    of the following form. Let P be a random permutation matrix
     
     doe(Kx, Ky) = EXPECTATION[ GIP_alpha(Kx, P Ky P) - GIP_alpha(Kx, Ky)]
     """
@@ -69,7 +75,9 @@ def exact_dip(Kx, Ky):
     return torch.real(itl.frobeniusGIP(Kx * Ky_normed))
 
 def dip_symmetric(Kx, Ky, alpha, n_iters=10, allow_exact_compute=True):
-    return 0.5*dip(Kx, Ky, alpha, n_iters, allow_exact_compute=allow_exact_compute)  + 0.5*dip(Ky, Kx, alpha, n_iters, allow_exact_compute=allow_exact_compute)
+    dip1 = dip(Kx, Ky, alpha, n_iters, allow_exact_compute=allow_exact_compute)
+    dip2 = dip(Ky, Kx, alpha, n_iters, allow_exact_compute=allow_exact_compute)
+    return 0.5*dip1 + 0.5*dip2
 
 def doe_symmetric(Kx, Ky, alpha, n_iters=10):
     return 0.5*doe(Kx, Ky, alpha, n_iters)  + 0.5*doe(Ky, Kx, alpha, n_iters)
