@@ -11,11 +11,11 @@ def permuteGram(K):
     """
     Randomly permutes the rows and columns of a square matrix
     """
-    
     assert K.shape[0] == K.shape[1], 'matrix dimensions must be the same'
     idx = torch.randperm(K.shape[0])
     K = K[idx, :]
     K = K[:, idx]
+
     return K
 
 def doe(Kx, Ky, alpha, n_iters=10, shouldReturnComponents = False):
@@ -25,7 +25,6 @@ def doe(Kx, Ky, alpha, n_iters=10, shouldReturnComponents = False):
     
     doe(Kx, Ky) = EXPECTATION[ H_alpha(Kx, P Ky P) - H_alpha(Kx, Ky)]
     """
-    
     H = itl.matrixAlphaJointEntropy([Kx, Ky], alpha=alpha)
     
     H_perm_avg = 0
@@ -35,8 +34,9 @@ def doe(Kx, Ky, alpha, n_iters=10, shouldReturnComponents = False):
     
     if shouldReturnComponents:
         return H_perm_avg - H, H, H_perm_avg
-    
+
     return H_perm_avg - H
+
 
 def dip(Kx, Ky, alpha, n_iters=10, allow_exact_compute=True):
     """
@@ -45,7 +45,6 @@ def dip(Kx, Ky, alpha, n_iters=10, allow_exact_compute=True):
     
     doe(Kx, Ky) = EXPECTATION[ GIP_alpha(Kx, P Ky P) - GIP_alpha(Kx, Ky)]
     """
-    
     if allow_exact_compute and alpha==2:
         return exact_dip(Kx, Ky)
     
@@ -63,7 +62,6 @@ def exact_dip(Kx, Ky):
     """
     Assuming alpha=2, computes the exact value of dip(Kx, Ky) with no expectation needed
     """
-
     n = Ky.shape[0]
     Ky_squared_mean = (torch.sum(torch.pow(Ky, 2)) - n) / (n**2 - n)
 
@@ -74,10 +72,13 @@ def exact_dip(Kx, Ky):
     
     return torch.real(itl.frobeniusGIP(Kx * Ky_normed))
 
+
 def dip_symmetric(Kx, Ky, alpha, n_iters=10, allow_exact_compute=True):
     dip1 = dip(Kx, Ky, alpha, n_iters, allow_exact_compute=allow_exact_compute)
     dip2 = dip(Ky, Kx, alpha, n_iters, allow_exact_compute=allow_exact_compute)
+
     return 0.5*dip1 + 0.5*dip2
 
+
 def doe_symmetric(Kx, Ky, alpha, n_iters=10):
-    return 0.5*doe(Kx, Ky, alpha, n_iters)  + 0.5*doe(Ky, Kx, alpha, n_iters)
+    return 0.5*doe(Kx, Ky, alpha, n_iters) + 0.5*doe(Ky, Kx, alpha, n_iters)
